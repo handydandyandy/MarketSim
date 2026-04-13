@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MarketSim — Virtual Economy</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── HEADER ─────────────────────────────────────────────────────────── -->
+  <header id="header">
+    <div class="header-left">
+      <span class="logo">📈 MarketSim</span>
+      <div class="game-clock">
+        <span class="clk-label">Day</span>
+        <span id="hdr-day" class="clk-val">0</span>
+        <span class="clk-sep">·</span>
+        <span id="hdr-date" class="clk-date">—</span>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div id="hdr-phase" class="phase-badge expansion">📈 Expansion</div>
+      <div class="hdr-macro">
+        <span class="mac-item">Fed Rate <strong id="hdr-rate">4.00%</strong></span>
+        <span class="mac-sep">|</span>
+        <span class="mac-item">Inflation <strong id="hdr-inflation">2.50%</strong></span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="spd-label">Speed</span>
+      <button class="speed-btn active" data-speed="1">1×</button>
+      <button class="speed-btn" data-speed="2">2×</button>
+      <button class="speed-btn" data-speed="5">5×</button>
+      <button id="pause-btn" class="speed-btn pause-btn">⏸</button>
+      <div style="margin-left: 10px; display: inline-flex; gap: 4px;">
+        <button id="btn-save" class="btn" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Save</button>
+        <button id="btn-load" class="btn" style="background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Load</button>
+        <button id="btn-export" class="btn" style="background: rgba(46, 160, 67, 0.2); border:1px solid rgba(46, 160, 67, 0.5); color:#3fb950; padding: 4px 8px; border-radius: 4px; cursor: pointer;" title="Export save to clipboard">Export</button>
+        <button id="btn-import" class="btn" style="background: rgba(86, 166, 255, 0.2); border:1px solid rgba(86, 166, 255, 0.5); color:#58a6ff; padding: 4px 8px; border-radius: 4px; cursor: pointer;" title="Import save from text">Import</button>
+      </div>
+      <span class="kbd-hint">Space=pause · Esc=back</span>
+    </div>
+  </header>
+
+  <!-- ── MAIN 3-COLUMN LAYOUT ───────────────────────────────────────────── -->
+  <div id="main-layout">
+
+    <!-- LEFT: Portfolio ───────────────────────────────────────────────────── -->
+    <aside id="portfolio-panel">
+      <div class="panel-title">Your Portfolio</div>
+
+      <div class="portfolio-summary">
+        <div class="port-total" id="port-total">$10,000.00</div>
+        <div class="port-change up" id="port-change">+$0.00 (0.00%)</div>
+      </div>
+
+      <div class="port-chart-wrap">
+        <canvas id="portfolio-chart" width="236" height="72"></canvas>
+        <div class="chart-legend">
+          <span class="legend-port">▬ Portfolio</span>
+          <span class="legend-mkt">▬ Market</span>
+        </div>
+      </div>
+
+      <div class="port-stats">
+        <div class="stat-row">
+          <span class="stat-label">Cash</span>
+          <span class="stat-value" id="port-cash">$10,000.00</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Invested</span>
+          <span class="stat-value" id="port-invested">$0.00</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Today's P&L</span>
+          <span class="stat-value" id="port-daily-pnl">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">vs Market</span>
+          <span class="stat-value" id="port-vs-market">—</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="holdings-section">
+        <div class="section-label">Holdings</div>
+        <div id="holdings-list">
+          <div class="empty-state">Buy stocks to start investing</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: Market ─────────────────────────────────────────────────────── -->
+    <main id="market-panel">
+
+      <!-- Index + sector heat bar -->
+      <div id="indices-bar">
+        <div class="index-card">
+          <div class="idx-label">COMP Index</div>
+          <div class="idx-value" id="idx-comp-value">1,000.00</div>
+          <div class="idx-change up" id="idx-comp-change">+0.00%</div>
+        </div>
+        <div class="sector-heat" id="sector-heat"></div>
+      </div>
+
+      <!-- Sector filter tabs -->
+      <div id="sector-tabs">
+        <button class="tab active" data-sector="ALL">All</button>
+        <button class="tab" data-sector="TECH">Tech</button>
+        <button class="tab" data-sector="ENERGY">Energy</button>
+        <button class="tab" data-sector="FINANCE">Finance</button>
+        <button class="tab" data-sector="HEALTH">Healthcare</button>
+        <button class="tab" data-sector="CONSUMER">Consumer</button>
+      </div>
+
+      <!-- Stock table -->
+      <div id="stock-table-wrap">
+        <table id="stock-table">
+          <thead>
+            <tr>
+              <th class="th-sym">Symbol</th>
+              <th class="th-name">Company</th>
+              <th class="th-price">Price</th>
+              <th class="th-chg">Change</th>
+              <th class="th-pe">P/E</th>
+              <th class="th-mktcap">Mkt Cap</th>
+              <th class="th-vol">Volume</th>
+              <th class="th-spark">30D</th>
+            </tr>
+          </thead>
+          <tbody id="stock-rows"></tbody>
+        </table>
+        <div class="table-hint">Click any row to view details and trade · P/E = Price ÷ Earnings — hover for explanations</div>
+      </div>
+
+      <!-- Stock detail panel -->
+      <div id="stock-detail" class="hidden">
+        <div class="detail-header">
+          <div class="det-title-row">
+            <span class="det-symbol" id="det-symbol">—</span>
+            <span class="det-name" id="det-name">—</span>
+            <span class="det-sector-badge" id="det-sector">—</span>
+          </div>
+          <button id="close-detail" class="close-btn">← Back to Market</button>
+        </div>
+
+        <div class="det-price-row">
+          <div class="det-prices">
+            <span class="det-price-big" id="det-price">$0.00</span>
+            <span class="det-change" id="det-change">+$0.00</span>
+            <span class="det-change-pct" id="det-change-pct">(+0.00%)</span>
+          </div>
+          <div class="det-desc" id="det-desc"></div>
+        </div>
+
+        <div class="det-chart-wrap">
+          <canvas id="stock-chart" width="580" height="200"></canvas>
+          <div class="chart-label">Price history (last 252 trading days)</div>
+        </div>
+
+        <div class="metrics-grid" id="det-metrics"></div>
+
+        <div class="trade-panel">
+          <div class="trade-holding" id="trade-holding"></div>
+          <div class="trade-row">
+            <label class="trade-label">Shares</label>
+            <input type="number" id="trade-qty" min="1" step="1" placeholder="0" autocomplete="off"/>
+            <button id="buy-btn" class="btn-buy">Buy</button>
+            <button id="sell-btn" class="btn-sell">Sell</button>
+          </div>
+          <div class="trade-cost-display" id="trade-cost">Cost: —</div>
+        </div>
+      </div>
+
+    </main>
+
+  <!-- RIGHT: Education & News ────────────────────────────────────────────── -->
+    <aside id="edu-panel">
+
+      <button id="glossary-btn" class="glossary-btn" style="margin-bottom: 0;">📚 Open Financial Glossary</button>
+
+      <div class="edu-section" id="market-condition-section">
+        <div class="edu-title">📊 Market Condition</div>
+        <div id="condition-card"></div>
+      </div>
+
+      <div class="edu-section" id="indicators-section">
+        <div class="edu-title">📉 Economic Indicators</div>
+        <div id="indicators-display"></div>
+      </div>
+
+      <div class="edu-section" id="news-section">
+        <div class="edu-title">
+          📰 Market News
+          <span class="badge" id="news-count">0</span>
+        </div>
+        <div class="news-hint">Click any item to read the explanation</div>
+        <div id="news-feed"><div class="empty-state">Events will appear here as the market evolves.</div></div>
+      </div>
+
+    </aside>
+  </div><!-- #main-layout -->
+
+  <!-- ── LEARNING CARD ──────────────────────────────────────────────────── -->
+  <div id="learning-card" class="learning-card hidden">
+    <div class="lc-header">
+      <span class="lc-bulb">💡</span>
+      <strong class="lc-concept" id="lc-concept">Concept</strong>
+      <button class="lc-close" id="lc-close">✕</button>
+    </div>
+    <p class="lc-text" id="lc-text"></p>
+  </div>
+
+  <!-- ── TOAST ──────────────────────────────────────────────────────────── -->
+  <div id="toast" class="toast hidden">
+    <span class="toast-icon" id="toast-icon">✓</span>
+    <span class="toast-text" id="toast-text"></span>
+  </div>
+
+  <!-- ── GLOSSARY MODAL ─────────────────────────────────────────────────── -->
+  <div id="glossary-modal" class="modal hidden">
+    <div class="modal-backdrop" id="glossary-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>📚 Financial Glossary</h2>
+        <button class="close-btn" id="glossary-close">✕</button>
+      </div>
+      <div class="modal-body" id="glossary-list"></div>
+    </div>
+  </div>
+
+  <!-- ── IMPORT MODAL ───────────────────────────────────────────────────── -->
+  <div id="import-modal" class="modal hidden">
+    <div class="modal-backdrop" id="import-backdrop"></div>
+    <div class="modal-box" style="width: 480px;">
+      <div class="modal-header">
+        <h2>📥 Import Save Game</h2>
+        <button class="close-btn" id="import-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 4px;">Paste your Base64 save string below:</p>
+        <textarea id="import-textarea" style="width: 100%; height: 90px; background: var(--bg-card); color: var(--text); padding: 10px; font-family: var(--mono); font-size: 12px; border: 1px solid var(--border); border-radius: 4px; resize: none; margin-bottom: 6px;"></textarea>
+        <button id="import-submit" class="btn-buy" style="width: 100%; padding: 10px;">Load and Resume</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script src="js/config.js"></script>
+<script src="js/market.js"></script>
+<script src="js/portfolio.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
